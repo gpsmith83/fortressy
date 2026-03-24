@@ -37,11 +37,12 @@ Fast-follow goal: parity with MVP gameplay plus desktop-specific UX improvements
 - **Cell**: a grid tile coordinate represented as `Vector2i`.
 - **Territory**: the set of cells enclosed by a sealed wall loop around at least one castle.
 
-### 2.2 Explicit MVP design choices (must be confirmed in implementation)
-These are requirements because they remove ambiguity:
+### 2.2 MVP design decisions
+These are requirements because they remove ambiguity (treat as locked for MVP implementation):
 - Enclosure adjacency rules are **cardinal only** (N/E/S/W). Diagonals do not seal territory.
 - Cannons count as **solid** for flood-fill blocking purposes.
 - The game is designed to feel responsive at **60 FPS**.
+- **MVP grid size: 42×30 cells.**
 
 ## 3) Functional Requirements (FR)
 
@@ -57,9 +58,9 @@ These are requirements because they remove ambiguity:
 ---
 
 ### FR-010: Camera (MVP)
-- **FR-010.1 (Locked decision)** Gameplay SHALL support **edge-pan** camera movement using mouse/pointer position near the viewport edges.
-- **FR-010.2 (Locked decision)** Gameplay camera SHALL have **no zoom** in MVP.
-- **FR-010.3 (Locked decision)** Camera movement SHALL be **clamped to the map rectangle** (no scrolling past map bounds).
+- **FR-010.1** Gameplay SHALL support **edge-pan** camera movement using mouse/pointer position near the viewport edges.
+- **FR-010.2** Gameplay camera SHALL have **no zoom** in MVP.
+- **FR-010.3** Camera movement SHALL be **clamped to the map rectangle** (no scrolling past map bounds).
 
 **Acceptance criteria**
 - Moving the pointer to the viewport edge pans the camera.
@@ -84,8 +85,8 @@ These are requirements because they remove ambiguity:
 - **FR-110.2** Build Phase SHALL have a visible countdown timer.
 - **FR-110.3** When the Battle timer expires, the game SHALL stop accepting Battle input and proceed to Build after resolving in-flight projectiles (FR-310.4).
 - **FR-110.4** When the Build timer expires, the game SHALL run territory validation and proceed based on success/failure.
-- **FR-110.4a (Locked decision)** When the Build timer expires, any currently active (unplaced) wall piece SHALL be **rejected** (not auto-placed), then territory validation runs immediately.
-- **FR-110.5 (Locked decision)** MVP default phase durations SHALL be:
+- **FR-110.4a** When the Build timer expires, any currently active (unplaced) wall piece SHALL be **rejected** (not auto-placed), then territory validation runs immediately.
+- **FR-110.5** MVP default phase durations SHALL be:
   - Battle: **10s**
   - Build: **10s**
   - Cannon Placement: **10s**
@@ -105,7 +106,7 @@ These are requirements because they remove ambiguity:
   - is_solid
   - is_hazard
 
-- **FR-200.5 (Locked decision)** MVP maps SHALL be **data-authored** (custom `MapData` resource or equivalent) and loaded by the gameplay scene at runtime.
+- **FR-200.5** MVP maps SHALL be **data-authored** (custom `MapData` resource or equivalent) and loaded by the gameplay scene at runtime.
 - **FR-200.6** MVP SHALL ship with **at least 1** `MapData` map, and the map pipeline SHALL support adding additional maps without code changes.
 
 **Acceptance criteria**
@@ -117,7 +118,7 @@ These are requirements because they remove ambiguity:
 - **FR-210.1** The map SHALL contain one or more castles placed at fixed cells.
 - **FR-210.2** In Setup Phase, the player SHALL select a starting (“Home”) castle.
 - **FR-210.3** Selecting Home castle SHALL initialize a perimeter wall around the castle footprint.
-- **FR-210.4 (Locked decision)** MVP castle footprint SHALL be **2×2 cells**.
+- **FR-210.4** MVP castle footprint SHALL be **2×2 cells**.
 
 **Acceptance criteria**
 - On selection, walls appear around the chosen castle and initial territory is claimed.
@@ -152,7 +153,7 @@ These are requirements because they remove ambiguity:
 - **FR-240.3** The player SHALL be able to rotate the active piece in 90° increments.
 - **FR-240.4** Placement SHALL be validated each frame; invalid placements SHALL be visibly indicated.
 - **FR-240.5** When placed, the piece SHALL become permanent (no undo) for the remainder of the Build Phase.
-- **FR-240.6 (Locked decision)** Wall pieces SHALL NOT overlap existing walls; each placed cell MUST be empty buildable ground.
+- **FR-240.6** Wall pieces SHALL NOT overlap existing walls; each placed cell MUST be empty buildable ground.
 
 **Acceptance criteria**
 - The system refuses placements on non-buildable cells; valid placements become walls.
@@ -184,13 +185,17 @@ These are requirements because they remove ambiguity:
 
 ### FR-310: Cannons and sequential cannon queue
 - **FR-310.1** Cannons SHALL exist as placeable structures occupying one or more cells.
-- **FR-310.1a (Locked decision)** MVP cannon footprint SHALL be **2×2 cells**.
+- **FR-310.1a** MVP cannon footprint SHALL be **2×2 cells**.
 - **FR-310.2** Cannons SHALL be fired sequentially in placement order.
 - **FR-310.3** Each cannon SHALL allow at most one projectile in flight at a time.
 - **FR-310.4** When Battle timer ends, the game SHALL wait for in-flight projectiles to resolve (impact + damage) before entering Build.
-- **FR-310.5 (Locked decision)** When the Battle timer ends, ships SHALL NOT fire new shots, and the player SHALL NOT be able to fire.
-- **FR-310.6 (Locked decision)** “Projectile drain” has **no timeout**; phase transition waits until all projectiles resolve.
-- **FR-310.7 (Locked decision)** There is **no special UI message/indicator** for projectile drain in MVP (beyond the phase/input lock).
+- **FR-310.5** When the Battle timer ends, ships SHALL NOT fire new shots, and the player SHALL NOT be able to fire.
+- **FR-310.6** “Projectile drain” has **no timeout**; phase transition waits until all projectiles resolve.
+- **FR-310.7** There is **no special UI message/indicator** for projectile drain in MVP (beyond the phase/input lock).
+
+**Notes**
+- Cannons in this section refer to **player-placed cannons**.
+- Enemies do **not** place cannons; they attack only via ship-fired projectiles.
 
 **Acceptance criteria**
 - With 2+ cannons, repeated Fire cycles through cannons in order.
@@ -201,9 +206,9 @@ These are requirements because they remove ambiguity:
 - **FR-320.1** Projectiles SHALL travel from cannon to target with a flight time proportional to distance.
 - **FR-320.2** Projectiles SHALL visually simulate an arc (pseudo-3D) as described in `research.md`.
 - **FR-320.3** On impact, the game SHALL spawn an explosion/hit event that can apply damage in an area.
-- **FR-320.4 (Locked decision)** Player-fired projectiles SHALL affect a **1×1** area (the impact cell).
-- **FR-320.5 (Locked decision)** Enemy-fired projectiles SHALL affect an area centered on the impact point:
-  - **2×2** for regular (non-dark) ships
+- **FR-320.4** Player-fired projectiles SHALL affect a **1×1** area (the impact cell).
+- **FR-320.5** Enemy-fired projectiles SHALL affect an area centered on the impact point:
+  - **2×2** for non-dark ships
   - **3×3** for dark ships
 
 **Acceptance criteria**
@@ -214,9 +219,9 @@ These are requirements because they remove ambiguity:
 ### FR-330: Damage rules + friendly fire
 - **FR-330.1** The game SHALL attribute damage source as Player or AI.
 - **FR-330.2** If AI damage destroys a wall cell, the game SHALL create a crater hazard (FR-410).
-- **FR-330.3 (Locked decision)** If Player damage destroys a wall cell, the wall cell SHALL revert to buildable ground and SHALL NOT create a crater.
-- **FR-330.4 (Locked decision)** Player-fired cannonballs SHALL NOT create craters on any impact type in MVP; crater creation is reserved for enemy incendiary impacts only.
-- **FR-330.5 (Locked decision)** Enemy incendiary projectiles SHALL behave like normal enemy projectiles for **wall destruction**, in addition to crater creation rules (FR-410).
+- **FR-330.3** If Player damage destroys a wall cell, the wall cell SHALL revert to buildable ground and SHALL NOT create a crater.
+- **FR-330.4** Player-fired cannonballs SHALL NOT create craters on any impact type in MVP; crater creation is reserved for enemy incendiary impacts only.
+- **FR-330.5** Enemy incendiary projectiles SHALL behave like normal enemy projectiles for **wall destruction**, in addition to crater creation rules (FR-410).
 
 **Acceptance criteria**
 - Same wall hit by AI vs player produces different aftermath (crater vs empty).
@@ -229,15 +234,18 @@ These are requirements because they remove ambiguity:
   - Regular Ship
   - Lander
   - Red Ship
-- **FR-400.2a (Locked decision)** Dark ships are **not** required for MVP and may be introduced in later levels.
+- **FR-400.2a** MVP SHALL also include a **Dark** variant of each ship:
+  - Dark Ship
+  - Dark Lander
+  - Dark Red Ship
 - **FR-400.3** The game SHALL cap active ships to a configurable maximum (default 16).
 
-- **FR-400.4 (Locked decision)** Spawn timing: each round’s wave SHALL spawn **all ships immediately at the start of Battle** (subject to the max-ship cap).
-- **FR-400.5 (Locked decision)** Spawn positions SHALL be randomly selected from **boundary water cells**.
-- **FR-400.6 (Locked decision)** Spawn positions SHALL be **unique per wave** (no stacking multiple ships on the same spawn cell).
-- **FR-400.7 (Locked decision)** Each spawned ship SHALL receive an initial heading based on which boundary it spawned on, with slight randomness.
+- **FR-400.4** Spawn timing: each round’s wave SHALL spawn **all ships immediately at the start of Battle** (subject to the max-ship cap).
+- **FR-400.5** Spawn positions SHALL be randomly selected from **boundary water cells**.
+- **FR-400.6** Spawn positions SHALL be **unique per wave** (no stacking multiple ships on the same spawn cell).
+- **FR-400.7** Each spawned ship SHALL receive an initial heading based on which boundary it spawned on, with slight randomness.
 
-- **FR-400.8 (Locked decision)** MVP wave composition SHALL be driven by a **points budget** per round.
+- **FR-400.8** MVP wave composition SHALL be driven by a **points budget** per round.
   - Costs (default): Regular **2**, Lander **5**, Red **8**
   - Budget (default): `10 + 3*(round-1)`, cap **40**
   - Max ships (default): **16**
@@ -250,15 +258,15 @@ These are requirements because they remove ambiguity:
 ---
 
 ### FR-430: Enemy projectiles (MVP)
-- **FR-430.1 (Locked decision)** All enemy projectiles that hit walls/terrain SHALL destroy walls within their damage footprint (FR-320.5).
-- **FR-430.2 (Locked decision)** Incendiary shots SHALL be fired only by **Red Ships** and **Dark Red Ships**.
-- **FR-430.3 (Locked decision)** Enemy target selection SHALL choose a **random wall tile** from **all** wall tiles on the map (uniform selection).
-- **FR-430.4 (Locked decision)** Enemy firing SHALL have **no line-of-sight constraints** and **no range constraints** in MVP.
+- **FR-430.1** All enemy projectiles that hit walls/terrain SHALL destroy walls within their damage footprint (FR-320.5).
+- **FR-430.2** Incendiary shots SHALL be fired only by **Red Ships** and **Dark Red Ships**.
+- **FR-430.3** Enemy target selection SHALL choose a **random wall tile** from **all** wall tiles on the map (uniform selection).
+- **FR-430.4** Enemy firing SHALL have **no line-of-sight constraints** and **no range constraints** in MVP.
 
 ---
 
 ### FR-450: Grunts (MVP)
-- **FR-450.1 (Locked decision)** MVP SHALL include **enemy grunts** as ground units.
+- **FR-450.1** MVP SHALL include **enemy grunts** as ground units.
 - **FR-450.2** During Build Phase, any cell occupied by a grunt SHALL be treated as **not buildable** (build placement is rejected per FR-250).
 - **FR-450.3** On successful territory enclosure/validation, grunts within the enclosed territory SHALL be **removed**.
 
@@ -271,10 +279,10 @@ These are requirements because they remove ambiguity:
 ### FR-410: Craters (hazards)
 - **FR-410.1** Craters SHALL be unbuildable hazard cells.
 - **FR-410.2** Craters created by AI impacts SHALL persist for a defined number of rounds (default 3), then revert to buildable ground.
-- **FR-410.3 (Locked decision)** Craters SHALL be **1×1 cell** at the impact cell.
-- **FR-410.4 (Locked decision)** Craters MAY occur on claimed territory.
-- **FR-410.5 (Locked decision)** If an AI incendiary impact hits a wall tile, the crater occupies that wall tile cell.
-- **FR-410.6 (Locked decision)** Craters SHALL be created **only** by **enemy incendiary** impacts.
+- **FR-410.3** Craters SHALL be **1×1 cell** at the impact cell.
+- **FR-410.4** Craters MAY occur on claimed territory.
+- **FR-410.5** If an AI incendiary impact hits a wall tile, the crater occupies that wall tile cell.
+- **FR-410.6** Craters SHALL be created **only** by **enemy incendiary** impacts.
 
 **Acceptance criteria**
 - A crater blocks building; after N rounds it disappears.
@@ -309,10 +317,10 @@ These are requirements because they remove ambiguity:
 
 ### FR-700: Failure and game over (MVP)
 - **FR-700.1** If Build validation fails to enclose at least one castle, the player SHALL lose (MVP) and be shown a results/game-over screen.
-- **FR-700.2 (Locked decision)** MVP failure ends the run immediately (no arcade credits).
-- **FR-700.3 (Locked decision)** Game Over screen SHALL provide: **Restart Run** and **Main Menu**.
+- **FR-700.2** MVP failure ends the run immediately (no arcade credits).
+- **FR-700.3** Game Over screen SHALL provide: **Restart Run** and **Main Menu**.
 
-- **FR-710 (Locked decision): Determinism and seed**
+- **FR-710: Determinism and seed**
   - **FR-710.1** Each run SHALL have a deterministic RNG seed.
   - **FR-710.2** Restart Run SHALL reuse the **same seed** as the failed run.
   - **FR-710.3** The Game Over screen SHALL display the run seed.
@@ -323,7 +331,7 @@ These are requirements because they remove ambiguity:
 
 ---
 
-### FR-720 (Locked decision): End-of-battle leftover ships behavior (option)
+### FR-720: End-of-battle leftover ships behavior (option)
 MVP supports a settings flag that controls what happens to ships when Battle ends (timer reaches zero):
 - **FR-720.1** The game SHALL support a configuration option:
   - **Persist ships**: ships remain on screen but are **frozen during Build/CannonPlacement**

@@ -78,6 +78,7 @@ A single map loads with layers; player can select Home castle and see an initial
 - Implement `GridManager`:
   - world↔cell conversion helpers
   - `is_buildable(cell)`, `is_solid(cell)`, `is_water(cell)`
+- Lock MVP map dimensions to **42×30** cells (drives camera clamp bounds + validation perf assumptions).
 - Implement `Castle` nodes and selection logic in `StateSetup`.
 - Implement initial perimeter placement around castle footprint.
 
@@ -154,7 +155,7 @@ After successful validation, player places awarded cannons within claimed territ
 - FR-310.1
 
 ### Work items
-- Represent cannon as a grid-occupying entity (MVP 1×1).
+- Represent cannon as a grid-occupying entity (MVP **2×2** footprint).
 - Implement cannon award calculation.
 - Implement placement UI similar to Build placement, restricted to claimed territory.
 - Register cannons in a placement-order list.
@@ -195,7 +196,7 @@ During Battle, crosshair aims, Fire triggers sequential cannons, projectiles arc
 
 ---
 
-## Milestone 7 — Enemies: one ship type + spawner + damage and scoring
+## Milestone 7 — Enemies: MVP roster + spawner + damage and scoring
 
 ### Deliverable
 Ships spawn and move; cannon hits destroy them; score increases.
@@ -207,7 +208,7 @@ Ships spawn and move; cannon hits destroy them; score increases.
 
 ### Work items
 - Implement `FleetManager` with spawn timer and cap.
-- Implement `Ship` (Regular Ship): simple deterministic movement.
+- Implement ship logic for MVP roster: Regular Ship, Lander, Red Ship (+ Dark variants).
 - Add HP + hit handling.
 - Emit score events on ship destroyed.
 
@@ -217,7 +218,7 @@ Ships spawn and move; cannon hits destroy them; score increases.
 
 ---
 
-## Milestone 8 — Craters + friendly fire differentiation (if Red-Ship is in MVP)
+## Milestone 8 — Craters + friendly fire differentiation
 
 ### Deliverable
 AI-caused wall destruction produces craters; player-caused does not.
@@ -288,14 +289,6 @@ Playable Web build, stable and performant enough for external testing.
 - NFR-100.3
 
 ---
-
-## Suggested “open decision” order (to unblock engineering)
-
-1. Confirm MVP enemy roster:
-   - Regular Ship only? Or include Red Ship to justify crater/friendly-fire systems in MVP.
-2. Confirm grid size + map loading approach (scene-based vs resource-driven).
-3. Decide credits vs single-run game over for MVP.
-4. Decide castle footprint size for MVP.
 
 ---
 
