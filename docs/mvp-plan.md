@@ -22,6 +22,37 @@ Test conventions:
 - Unit tests live in `test/unit/` and target pure modules/contracts (no scene setup where feasible).
 - Integration tests live in `test/integration/` and validate scene/state transitions end-to-end.
 
+## Data-driven configuration decision
+
+To satisfy NFR-160.2 (and keep Web exports + tests straightforward), MVP gameplay tuning values are configured via **typed Godot Resources**.
+
+- **Format**: `.tres` backed by a GDScript `Resource` class (typed fields with editor-friendly defaults).
+- **Default config location**: `res://config/run_config_default.tres`
+- **Config schema class**: `res://config/RunConfig.gd` (extends `Resource`, e.g. `class_name RunConfig`)
+
+How code should use it:
+
+- Systems that need tuning values take a `RunConfig` (or a narrow subset struct/value object) as an input, rather than reading constants from globals.
+- Scene-level wiring may use a small “config service” (autoload) to load the default config once and hand it to systems.
+
+How tests override it:
+
+- **Unit tests** should prefer in-memory configs: `var cfg := RunConfig.new()` and set only the fields needed for the test.
+- **Integration tests** may load an alternate `.tres` fixture (e.g. fast timers) *or* use a config-service override hook.
+
+Initial fields that must be config-driven (at minimum):
+
+- Phase durations (Setup/Battle/Build/Validate/CannonPlacement)
+- Fleet spawn interval + cap
+- Scoring knobs used in MVP
+- Cannon award rules
+- Any RNG-related tuning (piece weights) and the active run seed (seed itself is runtime state, but behavior must be controllable)
+
+Rationale:
+
+- Resources are editor-friendly, typed, diffable, and safe in Web exports (no special filesystem requirements).
+- Tests can inject configs without JSON parsing/schema validation work.
+
 ## Definition of Done (DoD) / quality gates (applies to every milestone)
 
 Each milestone is considered “done” only when:
