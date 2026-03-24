@@ -16,6 +16,10 @@ This plan breaks the MVP into incremental, testable milestones. Each milestone l
 - Keep systems **testable**: pure logic modules whenever possible (NFR-160.1).
 - Add **GUT tests** alongside the first implementation of each system (NFR-130).
 
+Test conventions:
+- Unit tests live in `test/unit/` and target pure modules/contracts (no scene setup where feasible).
+- Integration tests live in `test/integration/` and validate scene/state transitions end-to-end.
+
 ---
 
 ## Milestone 0 — Repository “playable boot” skeleton
@@ -57,7 +61,10 @@ A phase label and timers tick down and transition through phases (even if gamepl
 
 ### Verification
 - Manual: watch timer transitions.
-- Test: unit test for phase progression ordering (at least one cycle).
+- Tests:
+  - `test/unit/test_fsm_phase_progression.gd`
+    - Asserts the phase ordering for at least one full cycle: Setup → Battle → Build → Validate → CannonPlacement → Battle.
+    - Asserts `phase_changed` events are emitted (FR-100.5 / FR-900.3 `phase_changed`).
 
 ---
 
@@ -84,7 +91,11 @@ A single map loads with layers; player can select Home castle and see an initial
 
 ### Verification
 - Manual: click castle → perimeter appears.
-- Test: perimeter generation returns expected set of cells for a known castle size.
+- Tests:
+  - `test/unit/test_perimeter_generation.gd`
+    - Given a 2×2 castle footprint at a known cell, asserts the returned perimeter cell set matches expected.
+  - `test/unit/test_grid_manager_bounds.gd`
+    - Asserts the MVP grid bounds are treated as 42×30 for in-bounds checks.
 
 ---
 
@@ -112,8 +123,11 @@ During Build phase, a piece follows cursor, rotates, shows valid/invalid, and pl
 ### Verification
 - Manual: place multiple pieces; invalid placements blocked.
 - Tests:
-  - rotation correctness
-  - validation rejects water/walls/hazards/cannons
+  - `test/unit/test_piece_model_rotation.gd`
+    - Asserts `PieceModel` rotation matches the contract (90° clockwise) for a known shape.
+  - `test/unit/test_placement_validator_rules.gd`
+    - Asserts placement validation fails if any footprint cell overlaps water/wall/hazard/cannon/grunt.
+    - Asserts one invalid cell invalidates the whole placement.
 
 ---
 
@@ -137,10 +151,12 @@ At build end, game validates enclosure via flood fill and paints claimed territo
 - Define “success” rule: at least one castle enclosed.
 
 ### Verification
-- Tests with small synthetic grids for:
-  - enclosed
-  - open to boundary
-  - leak to water
+- Tests:
+  - `test/unit/test_flood_fill_validator.gd`
+    - Uses small synthetic grids to assert:
+      - enclosed succeeds
+      - open-to-boundary fails (`REACHED_BOUNDARY`)
+      - leak-to-water fails (`REACHED_WATER`)
 - Manual: build a loop → claim occurs.
 
 ---
@@ -162,7 +178,11 @@ After successful validation, player places awarded cannons within claimed territ
 
 ### Verification
 - Manual: cannons can’t be placed outside claimed.
-- Test: award calculation for home vs additional castles.
+- Tests:
+  - `test/unit/test_cannon_awards.gd`
+    - Asserts +2 for home, +1 per additional enclosed castle.
+  - `test/unit/test_cannon_placement_restrictions.gd`
+    - Asserts a 2×2 cannon footprint cannot be placed if any cell is outside claimed territory.
 
 ---
 
@@ -191,8 +211,10 @@ During Battle, crosshair aims, Fire triggers sequential cannons, projectiles arc
 ### Verification
 - Manual: rapid clicks rotate through cannons; far shots take longer.
 - Tests:
-  - queue order correctness
-  - projectile time-of-flight monotonic with distance
+  - `test/unit/test_cannon_queue_order.gd`
+    - Asserts sequential order respects placement order and skips cannons with `in_flight=true`.
+  - `test/unit/test_projectile_time_of_flight.gd`
+    - Asserts time-of-flight is monotonic with distance.
 
 ---
 
@@ -214,7 +236,11 @@ Ships spawn and move; cannon hits destroy them; score increases.
 
 ### Verification
 - Manual: ships spawn up to cap; can be destroyed.
-- Test: spawn cap holds.
+- Tests:
+  - `test/unit/test_fleet_spawn_cap.gd`
+    - Asserts the active ship count cannot exceed the configured cap.
+  - `test/unit/test_spawn_uniqueness.gd`
+    - Asserts spawn cells are unique per wave.
 
 ---
 
@@ -233,9 +259,15 @@ AI-caused wall destruction produces craters; player-caused does not.
 
 ### Verification
 - Manual: simulate AI hit on wall cell → crater appears.
-- Tests: crater lifetime counts down across rounds.
+- Tests:
+  - `test/unit/test_crater_lifetime.gd`
+    - Asserts crater lifetime decrements by round and clears after N rounds.
+  - `test/unit/test_friendly_fire_crater_rules.gd`
+    - Asserts AI-caused wall destruction creates a crater, player-caused does not.
 
 > Note: If MVP ships do **not** include Red Ship, crater logic can be stubbed and deferred.
+
+> Note: Red Ship (and Dark Red Ship) are in MVP; crater logic is required.
 
 ---
 
@@ -253,6 +285,10 @@ Failing validation ends the run and shows score.
 
 ### Verification
 - Manual: fail on purpose → game over screen appears and restart works.
+- Tests:
+  - `test/integration/test_game_over_flow.gd`
+    - Forces a validation failure and asserts transition to Game Over.
+    - Asserts the displayed run seed matches the active run seed.
 
 ---
 
