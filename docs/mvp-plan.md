@@ -4,6 +4,7 @@ Date: 2026-03-23
 Primary references: `docs/requirements.md`, `research.md`
 
 Working doc: `docs/traceability.md` (update alongside code/tests)
+Asset list: `docs/assets.md`
 
 This plan breaks the MVP into incremental, testable milestones. Each milestone lists:
 - **Deliverable**: what becomes playable/verified
