@@ -44,6 +44,84 @@ These are requirements because they remove ambiguity (treat as locked for MVP im
 - The game is designed to feel responsive at **60 FPS**.
 - **MVP grid size: 42×30 cells.**
 
+### 2.3 Data contracts (MVP)
+These contracts define the minimum expected inputs/outputs for the MVP’s core **pure logic** modules (NFR-160.1). They are intentionally engine-agnostic so they can be unit-tested in isolation.
+
+#### 2.3.1 `FloodFillValidator` (FR-230)
+**Purpose**: Determine whether a castle seed can reach boundary/water through passable cells, using cardinal adjacency.
+
+**Inputs**
+- `bounds_size: Vector2i` — grid width/height in cells (MVP: 42×30).
+- `solid: Dictionary[Vector2i, bool]` — impassable cells (walls + player cannons). Presence of a key means true.
+- `water: Dictionary[Vector2i, bool]` — water cells. Presence of a key means true.
+- `seed: Vector2i` — starting cell (a castle cell).
+
+**Outputs**
+- `success: bool` — true iff the region is enclosed (did NOT reach boundary or water).
+- `visited: Array[Vector2i]` — all visited passable cells (for optional territory painting).
+- `failure_reason: String` (or enum) — one of:
+  - `REACHED_BOUNDARY`
+  - `REACHED_WATER`
+  - `INVALID_SEED`
+
+**Rules**
+- Expansion is cardinal only.
+- Cells in `solid` are not visited.
+- If expansion touches any out-of-bounds neighbor, treat as boundary reached → fail.
+- If a visited cell is water (or expansion reaches water), fail.
+
+#### 2.3.2 `PieceModel` (FR-240)
+**Purpose**: Represent a build-piece shape as a set of cell offsets and apply 90° rotations deterministically.
+
+**Representation**
+- `cells: Array[Vector2i]` — offsets relative to an anchor at (0,0).
+- `rotation: int` — 0..3 representing clockwise 90° steps.
+
+**Operations**
+- `rotated_cells(rotation: int) -> Array[Vector2i]`
+- `cells_at(anchor: Vector2i, rotation: int) -> Array[Vector2i]`
+
+**Rotation rule**
+- Clockwise 90° about origin: `(x, y) -> (y, -x)`.
+
+#### 2.3.3 `PlacementValidator` (FR-250)
+**Purpose**: Validate whether a multi-cell footprint can be placed.
+
+**Inputs**
+- `cells: Array[Vector2i]` — target footprint.
+- Query callbacks (or an adapter interface) that answer in constant time:
+  - `is_in_bounds(cell) -> bool`
+  - `is_buildable(cell) -> bool`
+  - `is_water(cell) -> bool`
+  - `is_hazard(cell) -> bool`
+  - `has_wall(cell) -> bool`
+  - `has_cannon(cell) -> bool`
+  - `has_grunt(cell) -> bool`
+
+**Outputs**
+- `valid: bool`
+- `first_invalid_cell: Vector2i` (optional)
+- `reason: String` (optional; e.g. `WATER`, `HAZARD`, `OCCUPIED`, `OUT_OF_BOUNDS`)
+
+**Rule**
+- Any single invalid cell fails the whole placement.
+
+#### 2.3.4 `CannonQueue` (FR-310)
+**Purpose**: Provide deterministic sequential firing order with a per-cannon “projectile in flight” lock.
+
+**Inputs / state**
+- `cannon_ids: Array[String]` (or int IDs) in **placement order**.
+- `in_flight: Dictionary[id, bool]`.
+- `cursor_index: int` — index of last-selected cannon (persisted across shots).
+
+**Operations**
+- `next_fireable() -> String` — returns next fireable `id`, or empty string (`""`) if none.
+- `mark_fired(id) -> void` — sets `in_flight[id] = true`.
+- `mark_resolved(id) -> void` — sets `in_flight[id] = false`.
+
+**Rule**
+- Selection always scans forward from `cursor_index + 1` wrapping around, skipping cannons currently `in_flight`.
+
 ## 3) Functional Requirements (FR)
 
 ### FR-000: Boot + navigation
