@@ -151,6 +151,7 @@ At build end, game validates enclosure via flood fill and paints claimed territo
 - Integrate into `StateValidate`.
 - Paint claimed territory in Ground layer.
 - Define “success” rule: at least one castle enclosed.
+- Territory is recomputed each round from current walls/cannons; broken enclosures during Battle can cause validation failure.
 
 ### Verification
 - Tests:
@@ -158,7 +159,7 @@ At build end, game validates enclosure via flood fill and paints claimed territo
     - Uses small synthetic grids to assert:
       - enclosed succeeds
       - open-to-boundary fails (`REACHED_BOUNDARY`)
-      - leak-to-water fails (`REACHED_WATER`)
+  - leak-to-water fails (`REACHED_WATER`) when the fill reaches any passable cell adjacent (cardinally) to a water cell
 - Manual: build a loop → claim occurs.
 
 ---

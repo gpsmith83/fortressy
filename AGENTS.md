@@ -6,6 +6,7 @@ This repository is optimized for **agent-first** work: small, verifiable changes
 
 - Product + acceptance criteria: `docs/requirements.md`
 - Current execution plan: `docs/mvp-plan.md` (will be migrated into `docs/plans/` as plans mature)
+- Requirement-to-tests mapping (MUST keep updated): `docs/traceability.md`
 - Deep technical analysis/backlog: `research.md`
 - Local dev / CI-equivalent commands: `docs/dev.md`
 
@@ -13,6 +14,7 @@ This repository is optimized for **agent-first** work: small, verifiable changes
 
 1) **Prefer pure logic modules** for grid / validation / queues. Keep them decoupled from scene tree when possible.
 2) **Add tests as you add behavior** (GUT). If you change a requirement, update tests + docs in the same PR.
+	- When implementing or changing behavior tied to an FR/NFR, you MUST update `docs/traceability.md` in the same PR.
 3) **Validate before you finish**: run the same commands CI runs (see `docs/dev.md`).
 4) **Small PRs**: one capability at a time; include verification notes.
 

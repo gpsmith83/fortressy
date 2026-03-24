@@ -37,6 +37,11 @@ Fast-follow goal: parity with MVP gameplay plus desktop-specific UX improvements
 - **Cell**: a grid tile coordinate represented as `Vector2i`.
 - **Territory**: the set of cells enclosed by a sealed wall loop around at least one castle.
 
+Territory lifecycle:
+- Claimed territory is **not permanent**.
+- Territory is recomputed at validation time from current walls/cannons.
+- If no castles are enclosed at validation time (e.g., walls were broken during Battle), the run ends (see FR-700).
+
 ### 2.2 MVP design decisions
 These are requirements because they remove ambiguity (treat as locked for MVP implementation):
 - Enclosure adjacency rules are **cardinal only** (N/E/S/W). Diagonals do not seal territory.
@@ -68,7 +73,9 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - Expansion is cardinal only.
 - Cells in `solid` are not visited.
 - If expansion touches any out-of-bounds neighbor, treat as boundary reached → fail.
-- If a visited cell is water (or expansion reaches water), fail.
+- **Water is a leak boundary**: if expansion would step into a water cell (i.e., any visited passable cell has a cardinal neighbor present in `water`), immediately fail with `REACHED_WATER`.
+- Cells in `water` are never visited/enqueued.
+- `INVALID_SEED` if `seed` is out-of-bounds, or present in `solid`, or present in `water`.
 
 #### 2.3.2 `PieceModel` (FR-240)
 **Purpose**: Represent a build-piece shape as a set of cell offsets and apply 90° rotations deterministically.
@@ -80,6 +87,12 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 **Operations**
 - `rotated_cells(rotation: int) -> Array[Vector2i]`
 - `cells_at(anchor: Vector2i, rotation: int) -> Array[Vector2i]`
+
+Notes (MVP):
+- The returned `Array[Vector2i]` is treated as an **unordered set** for testing and gameplay rules.
+- Implementations MAY return cells in any order.
+
+(The Notes (MVP) block above is non-normative documentation for test authors.)
 
 **Rotation rule**
 - Clockwise 90° about origin: `(x, y) -> (y, -x)`.
@@ -103,6 +116,12 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - `first_invalid_cell: Vector2i` (optional)
 - `reason: String` (optional; e.g. `WATER`, `HAZARD`, `OCCUPIED`, `OUT_OF_BOUNDS`)
 
+Notes (MVP):
+- Only `valid` is normative for automated tests.
+- `first_invalid_cell` and `reason` are debug-facing and MAY change without being considered a breaking change.
+
+(The Notes (MVP) block above is non-normative documentation for test authors.)
+
 **Rule**
 - Any single invalid cell fails the whole placement.
 
@@ -121,6 +140,12 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 
 **Rule**
 - Selection always scans forward from `cursor_index + 1` wrapping around, skipping cannons currently `in_flight`.
+
+**Edge cases**
+- If `cannon_ids` is empty: `next_fireable()` MUST return `""`.
+- If `cursor_index` is out of range (`< -1` or `>= cannon_ids.size()`), treat it as `-1` for selection (scan starts at index 0).
+- If `in_flight` does not contain an entry for an id in `cannon_ids`, it MUST be treated as `false`.
+- If all cannons are `in_flight=true`, `next_fireable()` MUST return `""`.
 
 ## 3) Functional Requirements (FR)
 
@@ -214,6 +239,8 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - **FR-220.1** After a successful enclosure validation, the game SHALL mark enclosed ground cells as “claimed territory”.
 - **FR-220.2** Claimed territory SHALL be visually distinct from unclaimed ground.
 
+- **FR-220.3** Claimed territory SHALL be recomputed at validation time each round and is not permanent; territory MAY become unclaimed if enclosures are broken.
+
 **Acceptance criteria**
 - After validation success, enclosed region changes appearance.
 
@@ -225,7 +252,9 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
   - Expand cardinally from a castle cell through passable cells.
   - Stop expansion on solid cells (walls and cannons).
   - Fail immediately if expansion reaches map boundary or water.
-- **FR-230.3** Validation SHALL be performed for all surviving castles (or all candidate castles) necessary to determine survival.
+- **FR-230.3** Validation SHALL be performed for all castles necessary to determine whether validation succeeds.
+  - If multiple castles exist, validation SHALL succeed if **any** castle is enclosed.
+  - Validation MUST NOT validate only the Home castle.
 
 **Acceptance criteria**
 - A set of test maps (unit tests) assert expected enclosed/not enclosed results.
@@ -278,9 +307,8 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - **FR-310.6** “Projectile drain” has **no timeout**; phase transition waits until all projectiles resolve.
 - **FR-310.7** There is **no special UI message/indicator** for projectile drain in MVP (beyond the phase/input lock).
 
-**Notes**
-- Cannons in this section refer to **player-placed cannons**.
-- Enemies do **not** place cannons; they attack only via ship-fired projectiles.
+- **FR-310.8** Cannons in FR-310 refer to **player-placed cannons**.
+- **FR-310.9** Enemies SHALL NOT place cannons; enemy attacks occur only via ship-fired projectiles.
 
 **Acceptance criteria**
 - With 2+ cannons, repeated Fire cycles through cannons in order.
@@ -408,6 +436,8 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - **FR-700.1** If Build validation fails to enclose at least one castle, the player SHALL lose (MVP) and be shown a results/game-over screen.
 - **FR-700.2** MVP failure ends the run immediately (no arcade credits).
 - **FR-700.3** Game Over screen SHALL provide: **Restart Run** and **Main Menu**.
+
+- **FR-700.4** If multiple castles exist, the run SHALL fail only if **none** are enclosed at validation time.
 
 - **FR-710: Determinism and seed**
   - **FR-710.1** Each run SHALL have a deterministic RNG seed.

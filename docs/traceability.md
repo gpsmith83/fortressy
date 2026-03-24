@@ -81,6 +81,12 @@ Conventions:
 
 ---
 
+## Requirement notes (non-normative)
+
+- Flood fill water semantics: `REACHED_WATER` uses “water as leak boundary” semantics (fail when expansion would step into water / reachable passable adjacency to water). See `docs/requirements.md` §2.3.1.
+
+---
+
 ## Key Non-Functional Requirements (NFR) → Milestones → Tests → Implementation
 
 | Requirement | Milestone(s) | Test(s) | Implementation |
