@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docs sanity check
+        run: |
+          test -f AGENTS.md
+          test -f docs/index.md
+          test -f docs/requirements.md
+          test -f docs/mvp-plan.md
+          grep -q "docs/requirements.md" docs/index.md
+          grep -q "docs/mvp-plan.md" docs/index.md
+          grep -q "research.md" docs/index.md
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v1
+        with:
+          version: '4.6.1'
+          include-templates: true
+
+      - name: Run GUT (headless)
+        run: |
+          godot --version
+          godot --headless --path . --script res://addons/gut/gut_cmdln.gd -- -gconfig res://.gutconfig.json -gexit
+
+  export-web:
+    runs-on: ubuntu-latest
+    # Only deploy from main branch pushes.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v1
+        with:
+          version: '4.6.1'
+          include-templates: true
+
+      - name: Export Web
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-release "Web" build/index.html
+
+      - name: Smoke test export
+        run: |
+          test -f build/index.html
+          ls -la build
+          # Expect a wasm + pck for Godot web exports.
+          test "$(ls build/*.wasm 2>/dev/null | wc -l)" -ge 1
+          test "$(ls build/*.pck 2>/dev/null | wc -l)" -ge 1
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
