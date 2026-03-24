@@ -404,8 +404,28 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
   - **FR-710.3** The Game Over screen SHALL display the run seed.
   - **FR-710.4** MVP SHALL NOT provide manual seed entry.
 
+  - **FR-710.5** The gameplay scene SHALL be initialized with a `RunConfig`-equivalent data object that contains at minimum:
+    - `run_seed: int`
+    - `round_index: int` (starting at 1)
+    - `rng_policy: String` (documented; see FR-710.6)
+
+  - **FR-710.6** RNG policy (to ensure reproducibility):
+    - The implementation SHALL use a deterministic PRNG (`RandomNumberGenerator`) and SHALL seed it from `run_seed`.
+    - MVP SHALL use a **multi-stream RNG** approach: named RNG streams derived deterministically from `run_seed`.
+    - MVP MUST define (at minimum) these streams:
+      - `rng_ships` — wave composition + spawn cell selection + initial headings (FR-400.4–FR-400.8)
+      - `rng_pieces` — build piece sequence generation (FR-240)
+      - `rng_enemy_fire` — enemy target selection + firing decisions (FR-430)
+
+  - **FR-710.7** The following systems MUST use the seeded RNG policy (no `rand*()` globals):
+    - Ship spawn locations, uniqueness selection, and ship type selection (FR-400.4–FR-400.8)
+    - “Slight randomness” in initial ship heading (FR-400.7)
+    - Build piece generation order (FR-240.1)
+    - Enemy projectile target selection (FR-430.3)
+
 **Acceptance criteria**
 - Intentional failure reliably transitions to game over.
+- With a fixed `run_seed`, the first wave spawn positions/types and the first N build pieces are reproducible across restarts.
 
 ---
 
