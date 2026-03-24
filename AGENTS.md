@@ -18,6 +18,17 @@ This repository is optimized for **agent-first** work: small, verifiable changes
 3) **Validate before you finish**: run the same commands CI runs (see `docs/dev.md`).
 4) **Small PRs**: one capability at a time; include verification notes.
 
+## Quality gates / Definition of Done (DoD)
+
+Canonical DoD lives in `docs/mvp-plan.md` under **“Definition of Done (DoD) / quality gates”**.
+
+As a rule, don’t mark work complete unless:
+
+- You can exercise the change (editor run / relevant scene flow).
+- There are **no new errors** in Godot output for the verification scenario.
+- Tests are green (new tests added when adding/changing behavior).
+- `docs/traceability.md` is updated when requirements/behavior-to-tests mapping changes.
+
 ## Tooling
 
 ### Requirements

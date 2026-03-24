@@ -22,9 +22,26 @@ Test conventions:
 - Unit tests live in `test/unit/` and target pure modules/contracts (no scene setup where feasible).
 - Integration tests live in `test/integration/` and validate scene/state transitions end-to-end.
 
+## Definition of Done (DoD) / quality gates (applies to every milestone)
+
+Each milestone is considered “done” only when:
+
+- **Playable / runnable**: The deliverable can be exercised from the Godot editor (or exported build, if milestone includes export work).
+- **No new errors**: No new errors in the Godot output while performing the milestone’s manual verification.
+- **Automated verification**: All newly-added tests for the milestone pass, and existing tests remain green.
+- **Traceability updated**: `docs/traceability.md` is updated to reflect new/changed features, tests, and requirement links.
+- **Web-first sanity**: If the milestone adds input/rendering/game-loop behavior, it should remain compatible with Web export constraints (avoid platform-only APIs; avoid unbounded allocations per frame).
+
+Recommended (non-blocking unless the milestone explicitly targets it):
+
+- **Performance sanity**: No obvious per-frame spikes in the Godot profiler when running the milestone’s scenario.
+- **Determinism hooks**: Any RNG introduced is controllable/seedable (aligns with NFR-120.1).
+
 ---
 
 ## Milestone 0 — Repository “playable boot” skeleton
+
+Depends on: none
 
 ### Deliverable
 Press Play in Godot and reach a menu. Start loads a placeholder gameplay scene.
@@ -45,6 +62,8 @@ Press Play in Godot and reach a menu. Start loads a placeholder gameplay scene.
 ---
 
 ## Milestone 1 — FSM scaffold + timers + HUD
+
+Depends on: Milestone 0 (boot/menu -> game scene wiring)
 
 ### Deliverable
 A phase label and timers tick down and transition through phases (even if gameplay is stubbed).
@@ -71,6 +90,8 @@ A phase label and timers tick down and transition through phases (even if gamepl
 ---
 
 ## Milestone 2 — Grid foundation + map + castle selection
+
+Depends on: Milestone 1 (GameManager + StateSetup + phase transitions)
 
 ### Deliverable
 A single map loads with layers; player can select Home castle and see an initial perimeter wall.
@@ -102,6 +123,8 @@ A single map loads with layers; player can select Home castle and see an initial
 ---
 
 ## Milestone 3 — Build system: piece generation, rotation, placement validation
+
+Depends on: Milestone 2 (GridManager + map layers + bounds contract)
 
 ### Deliverable
 During Build phase, a piece follows cursor, rotates, shows valid/invalid, and places walls.
@@ -135,6 +158,8 @@ During Build phase, a piece follows cursor, rotates, shows valid/invalid, and pl
 
 ## Milestone 4 — Flood fill validation + territory claiming
 
+Depends on: Milestone 2 (grid + solids/water representation), Milestone 3 (walls/structures placement)
+
 ### Deliverable
 At build end, game validates enclosure via flood fill and paints claimed territory.
 
@@ -166,6 +191,8 @@ At build end, game validates enclosure via flood fill and paints claimed territo
 
 ## Milestone 5 — Cannon placement phase + cannon inventory
 
+Depends on: Milestone 4 (claimed territory output and/or representation), Milestone 1 (FSM includes CannonPlacement phase)
+
 ### Deliverable
 After successful validation, player places awarded cannons within claimed territory.
 
@@ -190,6 +217,8 @@ After successful validation, player places awarded cannons within claimed territ
 ---
 
 ## Milestone 6 — Battle: crosshair + sequential cannon firing + projectile impacts
+
+Depends on: Milestone 5 (cannons placed + ordered list), Milestone 1 (FSM includes Battle phase)
 
 ### Deliverable
 During Battle, crosshair aims, Fire triggers sequential cannons, projectiles arc and explode.
@@ -223,6 +252,8 @@ During Battle, crosshair aims, Fire triggers sequential cannons, projectiles arc
 
 ## Milestone 7 — Enemies: MVP roster + spawner + damage and scoring
 
+Depends on: Milestone 6 (projectile impacts/damage events), Milestone 1 (Battle phase timing)
+
 ### Deliverable
 Ships spawn and move; cannon hits destroy them; score increases.
 
@@ -248,6 +279,8 @@ Ships spawn and move; cannon hits destroy them; score increases.
 ---
 
 ## Milestone 8 — Craters + friendly fire differentiation
+
+Depends on: Milestone 6 (damage source tagging + impacts), Milestone 3 (walls/structures exist to be damaged)
 
 ### Deliverable
 AI-caused wall destruction produces craters; player-caused does not.
@@ -276,6 +309,8 @@ AI-caused wall destruction produces craters; player-caused does not.
 
 ## Milestone 9 — Game over + results
 
+Depends on: Milestone 4 (validation failure condition), Milestone 1 (state transitions)
+
 ### Deliverable
 Failing validation ends the run and shows score.
 
@@ -296,6 +331,8 @@ Failing validation ends the run and shows score.
 ---
 
 ## Milestone 10 — Web export hardening
+
+Depends on: Milestone 0 (boot), plus at least one full round loop implemented (Milestones 1–6)
 
 ### Deliverable
 Playable Web build, stable and performant enough for external testing.
@@ -319,6 +356,8 @@ Playable Web build, stable and performant enough for external testing.
 ---
 
 ## Fast-follow (0.2) — Windows desktop parity
+
+Depends on: Milestone 10 (Web export hardening complete)
 
 ### Focus items
 - Export preset for Windows.
