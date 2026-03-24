@@ -22,6 +22,35 @@ Test conventions:
 - Unit tests live in `test/unit/` and target pure modules/contracts (no scene setup where feasible).
 - Integration tests live in `test/integration/` and validate scene/state transitions end-to-end.
 
+## Evaluation harness (local + CI contract)
+
+This repo already includes a working harness used by CI. Treat it as the source of truth:
+
+- Local/CI-equivalent commands: `docs/dev.md`
+- CI implementation: `.github/workflows/ci.yml`
+
+**Pass criteria (per milestone)**
+
+- Headless GUT test suite passes.
+- If the milestone affects Web export behavior or assets: Web export + smoke test passes.
+- If the milestone introduces/changes RNG-driven behavior: determinism golden-seed test is added/updated once the feature is in scope (see “Determinism gate”).
+
+**Artifacts / outputs**
+
+- Console logs from headless runs are considered part of the harness output. Use consistent prefixes so they can be searched in CI logs.
+
+### Determinism gate (golden seed)
+
+Determinism requirements are specified in `docs/requirements.md` (FR-710 / NFR-120).
+
+- The project MUST eventually include a committed golden-output fixture:
+  - `test/data/golden/seed_<run_seed>.jsonl`
+- And an integration test that compares current output to the fixture:
+  - `test/integration/test_determinism_golden_seed.gd`
+
+Update rule:
+- If an intentional gameplay change modifies deterministic outputs, update the golden file(s) in the same PR.
+
 ## Data-driven configuration decision
 
 To satisfy NFR-160.2 (and keep Web exports + tests straightforward), MVP gameplay tuning values are configured via **typed Godot Resources**.
@@ -61,7 +90,14 @@ Each milestone is considered “done” only when:
 - **No new errors**: No new errors in the Godot output while performing the milestone’s manual verification.
 - **Automated verification**: All newly-added tests for the milestone pass, and existing tests remain green.
 - **Traceability updated**: `docs/traceability.md` is updated to reflect new/changed features, tests, and requirement links.
-- **Web-first sanity**: If the milestone adds input/rendering/game-loop behavior, it should remain compatible with Web export constraints (avoid platform-only APIs; avoid unbounded allocations per frame).
+- **Web-first sanity**: If the milestone adds input/rendering/game-loop behavior, it must remain compatible with Web export constraints.
+
+Web-first constraints (actionable):
+
+- Prefer `res://` resources for authored data; avoid OS file paths.
+- Avoid platform-specific APIs; if required, guard with `OS.has_feature()` / feature checks.
+- Avoid per-frame allocations in `_process` for hot paths (especially flood fill, placement checks, spawner loops).
+- Treat logging/debug overlays as optional and ensure they don't affect determinism (see FR-710 notes in `docs/requirements.md`).
 
 Recommended (non-blocking unless the milestone explicitly targets it):
 
