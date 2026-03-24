@@ -1,0 +1,28 @@
+Fortressy — Source-Available (Public Read-Only) License
+
+Copyright (c) 2026 gpsmith83
+
+All rights reserved.
+
+Permission is granted to view and access this repository and its contents for
+personal reference.
+
+No permission is granted to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, in whole or in part, nor to
+create derivative works, without prior written permission from the copyright
+holder.
+
+This notice applies to all source code, project files, documentation, and any
+other content in this repository EXCEPT where a file or folder contains its own
+license notice.
+
+Third-party components:
+- `addons/gut/` is licensed separately by its authors (see `addons/gut/LICENSE.md`).
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
