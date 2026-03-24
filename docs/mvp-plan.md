@@ -37,6 +37,31 @@ Recommended (non-blocking unless the milestone explicitly targets it):
 - **Performance sanity**: No obvious per-frame spikes in the Godot profiler when running the milestone’s scenario.
 - **Determinism hooks**: Any RNG introduced is controllable/seedable (aligns with NFR-120.1).
 
+## Debug / observability hooks
+
+Goal: make it fast to verify behavior and diagnose issues (especially in Web exports where attaching a debugger is slower).
+
+Minimum hooks to add when the relevant systems land:
+
+- **On-screen debug overlay (toggleable)**
+  - Key: `F3` (or a simple UI toggle in menu).
+  - Shows (when available):
+    - current phase + time remaining
+    - current round index
+    - run seed
+    - # claimed cells (or claimed %)
+    - cannon count (total / in-flight)
+    - ship count (active / cap)
+- **Structured logging**
+  - Use consistent prefixes/categories so browser console output is searchable.
+  - Emit one log per major event:
+    - phase transitions (`phase_changed`)
+    - validation success/failure + reason (`REACHED_BOUNDARY`, `REACHED_WATER`, etc.)
+    - cannon fired (which index/id) + impact
+    - ship spawned/destroyed + score delta
+
+Non-goals for MVP: external telemetry, log persistence, remote crash reporting.
+
 ---
 
 ## Milestone 0 — Repository “playable boot” skeleton
