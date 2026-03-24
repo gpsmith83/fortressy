@@ -152,6 +152,13 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 - **FR-100.3** The FSM SHALL transition phases based on timers and/or completion conditions as defined below.
 - **FR-100.4** During a phase, inputs not allowed for that phase SHALL have no gameplay effect.
 
+- **FR-100.5** The game SHALL emit a `phase_changed` signal/event whenever the active phase changes.
+  - Payload MUST include at minimum:
+    - `from_phase: String`
+    - `to_phase: String`
+    - `round_index: int`
+  - Payload field names MUST match the `phase_changed` schema in FR-900.3.
+
 **Acceptance criteria**
 - A debug overlay (or logs) shows the current phase and transitions.
 - Player cannot build during Battle and cannot fire during Build.
@@ -381,12 +388,16 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 
 ### FR-600: Scoring and HUD
 - **FR-600.1** The game SHALL track and display score.
+- **FR-600.1a** The game SHALL emit a `score_changed` signal/event whenever score changes.
+  - Payload MUST include at minimum: `delta: int`, `new_score: int`, `reason: String`.
+  - Payload field names MUST match the `score_changed` schema in FR-900.3.
 - **FR-600.2** MVP scoring MUST include at least:
   - ship destroyed (+30)
   - territory bonus (enclosed tiles × 7)
   - home castle bonus (+150)
   - secondary castle bonus (+50 each) if multiple castles exist in MVP
 - **FR-600.3** The HUD SHALL display current phase and timers.
+- **FR-600.4** The HUD SHALL display the current `run_seed` (FR-710) during gameplay.
 
 **Acceptance criteria**
 - Score changes immediately upon events and is visible during play.
@@ -426,6 +437,44 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
 **Acceptance criteria**
 - Intentional failure reliably transitions to game over.
 - With a fixed `run_seed`, the first wave spawn positions/types and the first N build pieces are reproducible across restarts.
+
+---
+
+### FR-900: Instrumentation and event log (MVP)
+- **FR-900.1** The project SHOULD support an in-memory, append-only event log for debugging and automated testing.
+  - Each entry SHOULD be a Dictionary with at minimum: `t: float` (seconds since run start), `type: String`, `data: Dictionary`.
+  - Logging MUST NOT affect gameplay determinism.
+- **FR-900.2** The event log SHOULD be able to be enabled/disabled via a single configuration flag (default off in release builds).
+
+- **FR-900.3** The event log SHOULD use canonical `type` strings with stable `data` schemas:
+  - `phase_changed`
+    - `data.from_phase: String`
+    - `data.to_phase: String`
+    - `data.round_index: int`
+    - `data.phase_time_seconds: float` (configured duration)
+  - `score_changed`
+    - `data.delta: int`
+    - `data.new_score: int`
+    - `data.reason: String`
+  - `piece_generated`
+    - `data.piece_id: String`
+    - `data.round_index: int`
+  - `ship_spawned`
+    - `data.ship_type: String` (e.g. `REGULAR`, `LANDER`, `RED`, `DARK_REGULAR`, `DARK_LANDER`, `DARK_RED`)
+    - `data.cell: Vector2i`
+    - `data.round_index: int`
+  - `projectile_fired`
+    - `data.source: String` (`PLAYER` or `AI`)
+    - `data.source_id: String` (cannon id or ship id; may be empty for MVP if not modeled)
+    - `data.from_cell: Vector2i`
+    - `data.to_cell: Vector2i`
+
+  Notes:
+  - Additional keys MAY be added, but these canonical keys MUST remain stable.
+  - If a system is not yet implemented, its event type may be omitted.
+
+**Acceptance criteria**
+- With instrumentation enabled, phase transitions and score changes produce corresponding log entries.
 
 ---
 
