@@ -92,3 +92,12 @@ Conventions:
 | NFR-130.1 minimum test bar (flood fill, placement, queue, crater) | 3, 4, 6, 8 | see unit tests named in plan | GUT suite |
 | NFR-160.1 core systems separated into testable modules | 1–8 | evidence via unit tests | `scripts/` pure modules (TBD) |
 | NFR-160.2 constants data-driven (timers/scoring/caps) | 1, 7, 10 | TBD | config resources (TBD) |
+
+---
+
+## Determinism golden outputs (planned artifacts)
+
+These files do not exist yet; they are required by FR-710.8 once the event log + RNG-driven systems land.
+
+- Test: `test/integration/test_determinism_golden_seed.gd` (TBD)
+- Golden data: `test/data/golden/seed_<run_seed>.jsonl` (TBD)

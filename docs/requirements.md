@@ -434,6 +434,33 @@ These contracts define the minimum expected inputs/outputs for the MVP’s core 
     - Build piece generation order (FR-240.1)
     - Enemy projectile target selection (FR-430.3)
 
+  - **FR-710.8** Determinism smoke test (golden seed replay)
+    - The repo SHALL include a deterministic “golden seed” test that validates core RNG-driven outputs.
+    - The test SHALL:
+      - Start a new run with a fixed `run_seed` (one or more seeds; at least 1 seed is required).
+      - Run the simulation forward to a defined checkpoint.
+      - Collect a filtered, deterministic subset of the event log entries.
+      - Compare the collected entries to a committed “golden” expected output file.
+
+    - **Checkpoint (MVP):** “end of Battle phase for round 1” (or earlier if Battle is not yet fully simulated).
+      - If Battle/enemy systems are not implemented yet, an earlier checkpoint is allowed as long as it includes:
+        - `phase_changed` for at least one full cycle, and
+        - at least N=10 `piece_generated` events (once pieces exist).
+
+    - **Event selection rules** (to keep the test stable):
+      - Compare only event fields that are required by FR-900.3 canonical schemas.
+      - Do NOT compare `t` timestamps (float) in the golden output (avoid flaky time-based diffs).
+      - Sort order MUST match the original append order (no re-sorting).
+
+    - **Golden output file format:** line-delimited JSON (one JSON object per line).
+      - Path convention: `test/data/golden/seed_<run_seed>.jsonl`
+      - Each line is shaped as:
+        - `{ "type": String, "data": Dictionary }`
+      - Example line:
+        - `{ "type": "piece_generated", "data": { "piece_id": "I", "round_index": 1 } }`
+
+    - **Update rule:** If intentional gameplay changes alter deterministic outputs, the golden files MUST be updated in the same PR.
+
 **Acceptance criteria**
 - Intentional failure reliably transitions to game over.
 - With a fixed `run_seed`, the first wave spawn positions/types and the first N build pieces are reproducible across restarts.
